@@ -23,7 +23,10 @@ namespace JediAcademy.Back.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMediatR(typeof(GetStudents));
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly, typeof(GetStudents).Assembly);
+            });
             services.AddDbContext<JediStudentsDbContext>(options => { options.UseInMemoryDatabase("JediStudents"); });
             services.AddScoped<IJediStudentsDbContext>(provider => provider.GetService<JediStudentsDbContext>());
             services.AddControllers();
