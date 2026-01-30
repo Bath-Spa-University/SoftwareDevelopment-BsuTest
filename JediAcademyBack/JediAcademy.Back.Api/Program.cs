@@ -1,47 +1,61 @@
+using JediAcademy.Back.Application.Interfaces;
+using JediAcademy.Back.Application.Queries;
 using JediAcademy.Back.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Threading.Tasks;
 
-namespace JediAcademy.Back.Api
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMediatR(cfg =>
 {
-    public class Program
+    cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly, typeof(GetStudents).Assembly);
+});
+
+builder.Services.AddDbContext<JediStudentsDbContext>(options =>
+{
+    options.UseInMemoryDatabase("JediStudents");
+});
+
+builder.Services.AddScoped<IJediStudentsDbContext>(provider =>
+    provider.GetRequiredService<JediStudentsDbContext>());
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+// Seed in-memory database
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    try
     {
-        public static async Task Main(string[] args)
-        {
-            var host = CreateHostBuilder(args).Build();
-
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-
-                try
-                {
-                    var context = services.GetRequiredService<JediStudentsDbContext>();
-
-                    await JediStudentsDbContextSeed.SeedDataAsync(context);
-                }
-                catch (Exception ex)
-                {
-                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-                    logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-
-                    throw;
-                }
-            }
-
-            await host.RunAsync();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+        var context = services.GetRequiredService<JediStudentsDbContext>();
+        await JediStudentsDbContextSeed.SeedDataAsync(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        throw;
     }
 }
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

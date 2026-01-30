@@ -1,20 +1,46 @@
-using Microsoft.AspNetCore.Hosting;
+using JediAcademy.Presentation.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
-namespace JediAcademy.Presentation
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpClient("Species", config =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    config.BaseAddress = new Uri(builder.Configuration["SwApi:Species"]);
+});
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+builder.Services.AddHttpClient("Individuals", config =>
+{
+    config.BaseAddress = new Uri(builder.Configuration["SwApi:Individuals"]);
+});
+
+builder.Services.AddScoped<IJediEnrollmentService, JediEnrollmentService>();
+
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
 }
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
