@@ -24,7 +24,8 @@ On the file Resources.DM you'll find links to documentation/videos that may help
 # How do I send you my solution?
 We would like for you to create a private repository on your GitHub account and invite the following as collaborators.<br/>
 - https://github.com/bsu-sjb
-- https://github.com/bsucse <br/>
+- https://github.com/bsucse
+
 If this is not possible please contact us so we can find an alternative solution.
 
 # How do I run the application?
